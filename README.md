@@ -12,13 +12,13 @@ First, create a new IframeClient instance on your host page and in each iframe w
 
 **On http://my-host-page.com/index.html**
 
-```
+```javascript
 var hostClient = IframeClient.create('myapp', 'http://my-embed.com');
 ```
 
 **On http://my-embed.com/embed.html**
 
-```
+```javascript
 var embedClient = IframeClient.create('myapp', '*');
 ```
 
@@ -32,7 +32,7 @@ The `IframeClient.create` factory function accepts an _application namespace_, a
 
 Next, configure each client with the messages that it should respond to. Message handlers may be chained using calls to the `.on()` command with the name of a message and a handler function to respond to it. A message handler may receive the message event and a payload of data from the message, and may return other data to respond with. After configuring all message handlers, call `.listen()` to start receiving communication.
 
-```
+```javascript
 embedClient
   .on('play', function(evt, data) { ... })
   .on('pause', function(evt, data) { ... })
@@ -46,13 +46,13 @@ Messages may be posted or requested.
 
 Using `post`, a client sends a one-time message attempt to the target window. This message is posted blindly at the target frame, and offers no indication as to whether the message was actually received. Message posts will commonly fail if one frame starts sending messages before the other frame is ready to receive them.
 
-```
+```javascript
 hostClient.post('#my-iframe', 'play', 'hello embed!');
 ```
 
 Using `request`, a client initiates a full request/response cycle with the target window. A request starts repeatedly posting a message at the target window, and does not stop until the other window responds or else the request times out. This also allows frames to request data from one another, and for message requests to provide callbacks.
 
-```
+```javascript
 hostClient.request('#my-iframe', 'getstuff', 'hello embed!', function(err, data) {
   if (err) return console.log(err.message);
   console.log('Received data:' + data);
@@ -61,25 +61,27 @@ hostClient.request('#my-iframe', 'getstuff', 'hello embed!', function(err, data)
 
 ## API
 
-### var cli = IframeClient.create(appId, [allowedOrigin])
+#### var cli = IframeClient.create(appId, [allowedOrigin])
 
 Creates a new IframeClient instance.
 
-### cli.on(message, handler, [context])
+#### cli.on(message, handler, [context])
 
 Adds a message handler to the client.
 
-### cli.listen()
+#### cli.listen()
 
 Starts the client listening for incoming messages. Call this once after registering all message handlers.
 
-### cli.post(target, message, [value])
+#### cli.post(target, message, [value])
 
 Posts a blind message to the target window. This is a wrapper for calling `postMessage` with some convenience data management for passing a message string and a data value. Messages sent via `post` may fail if the receiving client has not yet
 
-### cli.request(target, message, [value], [callback])
+#### cli.request(target, message, [value], [callback])
 
-### cli.dispose()
+Initiates a request/response cycle with the target window frame.
+
+#### cli.dispose()
 
 Stops listening and cancels all message polling. The client will now be safe for garbage collection.
 

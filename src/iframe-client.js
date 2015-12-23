@@ -1,4 +1,4 @@
-(function (global, factory) {
+(function(global, factory) {
 
   /**
   * Generates a random GUID (Globally-Unique IDentifier)
@@ -15,18 +15,20 @@
   * Seeds the client factory with parameters.
   * @private
   */
-  function createIframeClient(app, origin) {
-    return factory(guid(), app, origin, global);
-  }
+  var IframeClient = {
+    create: function(app, origin) {
+      return factory(guid(), app, origin, global);
+    }
+  };
 
   /**
   * Module definitions:
   * Supports CommonJS and global namespace.
   */
   if (typeof module === 'object' && module.exports) {
-    module.exports = createIframeClient;
+    module.exports = IframeClient;
   } else {
-    global.iframeClient = createIframeClient;
+    global.IframeClient = IframeClient;
   }
 
 })(this, function(CLIENT_GUID, appId, originHost, global) {
