@@ -26,7 +26,7 @@ The `IframeClient.create` factory function accepts an _application namespace_ an
 
 ### 2. Configure message handlers
 
-Next, configure each client with the messages that it should respond to. Message handlers may be chained using calls to the `.on()` command. A handler function receives the message event and a payload of data from each message, and may return response data to pass back to the sender. After configuring all message handlers, call `.listen()` to begin monitoring communication.
+Next, configure each client with the messages that it should respond to. Message handlers may be chained using calls to the `.on()` method. A handler function receives the message event and a payload of data from each message, and may return response data to pass back to the sender. After configuring all message handlers, call `.listen()` to begin monitoring communication.
 
 ```javascript
 embedClient
@@ -46,12 +46,12 @@ Using `post`, a client sends a one-time message attempt to the target window. Th
 hostClient.post('#my-iframe', 'play', 'hello embed!');
 ```
 
-Using `request`, a client initiates a full request/response cycle with the target window. A request starts repeatedly posting a message to the target window, and does not stop until the other window responds, or the request times out. This also allows windows to request data from one another, and for message requests to support callbacks.
+Using `request`, a client initiates a full request/response cycle with the target window. A request will repeatedly send a message to the target window, and does not stop sending until the target responds or the request times out. This also allows windows to coordinate data passing, and for completed requests to trigger callbacks.
 
 ```javascript
 hostClient.request('#my-iframe', 'getstuff', 'hello embed!', function(err, res) {
   if (err) return console.log(err.message);
-  console.log('Received response:' + res);
+  console.log('Received response:', res);
 });
 ```
 
@@ -67,7 +67,7 @@ Creates a new `IframeClient` instance.
 
 #### `cli.on(message, handler, [context])`
 
-Registers a message handler on the client. Handlers will run when the specified message type is received within the window.
+Registers a message handler on the client. Handlers will run when the specified message type is received within the window. Returns the client instance to support method chaining.
 
 * `message`: required string. Name of the message to respond to.
 * `handler`: required function. Handler function to run in response to the message. Accepts arguments `(evt, value)`, where `evt` is the message event, and `value` is any data value that was sent with the message. This handler may return data to pass back in response to the sender.
@@ -75,7 +75,7 @@ Registers a message handler on the client. Handlers will run when the specified 
 
 #### `cli.listen()`
 
-Starts the client listening for incoming messages. Call this once after registering all message handlers.
+Starts the client listening for incoming messages. Call this once after registering all message handlers. Returns the client instance to support method chaining.
 
 #### `cli.post(target, message, [value])`
 
