@@ -1,7 +1,7 @@
 {
   "name": "iframe-client",
   "version": "0.0.1",
-  "description": "cross-origin iframe messaging client",
+  "description": "Cross-origin iframe messaging client",
   "main": "src/iframe-client.js",
   "scripts": {
     "test": "mocha-phantomjs ./test/test.html"

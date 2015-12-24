@@ -1,14 +1,14 @@
 # IframeClient
 
-Provides simpler and more reliable cross-origin JavaScript messaging between iframes and their host pages by wrapping `window.postMessage` in a transactional layer. IframeClient builds atop `postMessage` in the way that TCP builds atop IP. IframeClient provides request/response cycles with polling and timeouts to (better) guarentee that messages will be received and able to provide response.
+Provides simple and reliable cross-origin JavaScript messaging between iframes and their host pages by wrapping `window.postMessage` in a transactional layer. IframeClient builds atop `postMessage` in the way that TCP builds atop IP. IframeClient provides request/response cycles with polling and timeouts to (better) guarentee that messages will be received and post back responses.
 
-Source is configured as an NPM module and a Ruby gem for integration into Node-based projects and Rails applications.
+This repo is configured as an NPM module and a Ruby gem for integration into Node-based projects and Rails applications.
 
 ## Usage
 
 ### 1. Create client instances
 
-First, create a new IframeClient instance on your host page and in each iframe window:
+First, create a new `IframeClient` instance on your host page and within each iframe window:
 
 **On http://my-host-page.com/index.html**
 
@@ -22,15 +22,11 @@ var hostClient = IframeClient.create('myapp', 'http://my-embed.com');
 var embedClient = IframeClient.create('myapp', '*');
 ```
 
-The `IframeClient.create` factory function accepts an _application namespace_, and a _frame origin_ that the new client is allowed to post messages to. You'll need to build an IframeClient instance on your host page, and within each iframe loaded into the host.
-
-* The **application namespace** is a keyword identifying the application these client messages pertain to. All clients should use the same application namespace so they'll recognize and respond to one another's messages.
-
-* The **frame origin** identifies the origin that each client is allowed to send messages to. You may specify `"*"` to allow a client to post to any origin.
+The `IframeClient.create` factory function accepts an _application namespace_ and a _frame origin_ that the new client may post messages to. It's very important that each window (host and iframes) build their own client instance with a common namespace so they may respond to relevant messages within their window environment.
 
 ### 2. Configure message handlers
 
-Next, configure each client with the messages that it should respond to. Message handlers may be chained using calls to the `.on()` command with the name of a message and a handler function to respond to it. A message handler may receive the message event and a payload of data from the message, and may return other data to respond with. After configuring all message handlers, call `.listen()` to start receiving communication.
+Next, configure each client with the messages that it should respond to. Message handlers may be chained using calls to the `.on()` command. A handler function receives the message event and a payload of data from each message, and may return response data to pass back to the sender. After configuring all message handlers, call `.listen()` to begin monitoring communication.
 
 ```javascript
 embedClient
@@ -42,48 +38,70 @@ embedClient
 
 ### 3. Send messages
 
-Messages may be posted or requested.
+Messages may be **posted** or **requested**.
 
-Using `post`, a client sends a one-time message attempt to the target window. This message is posted blindly at the target frame, and offers no indication as to whether the message was actually received. Message posts will commonly fail if one frame starts sending messages before the other frame is ready to receive them.
+Using `post`, a client sends a one-time message attempt to the target window. This message is posted blindly at the target window, and provides no indication as to whether the message was actually received. Message posts will commonly fail if one window starts sending messages before another window is ready to receive them.
 
 ```javascript
 hostClient.post('#my-iframe', 'play', 'hello embed!');
 ```
 
-Using `request`, a client initiates a full request/response cycle with the target window. A request starts repeatedly posting a message at the target window, and does not stop until the other window responds or else the request times out. This also allows frames to request data from one another, and for message requests to provide callbacks.
+Using `request`, a client initiates a full request/response cycle with the target window. A request starts repeatedly posting a message to the target window, and does not stop until the other window responds, or the request times out. This also allows windows to request data from one another, and for message requests to support callbacks.
 
 ```javascript
-hostClient.request('#my-iframe', 'getstuff', 'hello embed!', function(err, data) {
+hostClient.request('#my-iframe', 'getstuff', 'hello embed!', function(err, res) {
   if (err) return console.log(err.message);
-  console.log('Received data:' + data);
+  console.log('Received response:' + res);
 });
 ```
 
 ## API
 
-#### var cli = IframeClient.create(appId, [allowedOrigin])
+#### `var cli = IframeClient.create(appId, [allowedOrigin])`
 
-Creates a new IframeClient instance.
+Creates a new `IframeClient` instance.
 
-#### cli.on(message, handler, [context])
+* `appId`: required string. A keyword specifying an app-specific messaging channel. Clients across windows must share a common application identifier to respond to one another's messages.
 
-Adds a message handler to the client.
+* `[allowedOrigin]`: optional string. Specifies an origin URI that the client is allowed to post messages to. Defaults to `"*"` (allow any origin) when omitted.
 
-#### cli.listen()
+#### `cli.on(message, handler, [context])`
+
+Registers a message handler on the client. Handlers will run when the specified message type is received within the window.
+
+* `message`: required string. Name of the message to respond to.
+* `handler`: required function. Handler function to run in response to the message. Accepts arguments `(evt, value)`, where `evt` is the message event, and `value` is any data value that was sent with the message. This handler may return data to pass back in response to the sender.
+* `[context]`: optional object. Context in which to invoke the handler.
+
+#### `cli.listen()`
 
 Starts the client listening for incoming messages. Call this once after registering all message handlers.
 
-#### cli.post(target, message, [value])
+#### `cli.post(target, message, [value])`
 
-Posts a blind message to the target window. This is a wrapper for calling `postMessage` with some convenience data management for passing a message string and a data value. Messages sent via `post` may fail if the receiving client has not yet
+Posts a blind message to another window. This is a convenience wrapper for calling `postMessage` with some added data management. Messages sent via `post` may fail if the receiving window's client has not yet fully initialized. Use this method to send non-critical messages where loss is acceptible.
 
-#### cli.request(target, message, [value], [callback])
+* `target`: required string, iframe, or window element. Must specify an iframe or window element to post to, or else provide a selector for an iframe or window element.
 
-Initiates a request/response cycle with the target window frame.
+* `message`: required string. A message keyword that maps to registered message handlers in the target window.
 
-#### cli.dispose()
+* `[value]`: optional object. Additional data to be sent as a payload with the message.
 
-Stops listening and cancels all message polling. The client will now be safe for garbage collection.
+#### `cli.request(target, message, [value], [callback])`
+
+Initiates a request/response cycle with the target window. The message is repeatedly sent to the target window until the window responds, or until the request times out. Use this method for better guarentee of critical message delivery, or to request a data response from another window.
+
+* `target`: required string, iframe, or window element. Must specify an iframe or window element to post to, or else provide a selector for an iframe or window element.
+
+* `message`: required string. A message keyword that maps to registered message handlers in the target window.
+
+* `[value]`: optional object. Additional data to be sent as a payload with the message.
+
+* `[callback]`: optional function. Callback to run after the request cycle is complete. Accepts arguments `(err, res)`, where `err` is any error that was encountered, and `res` is response data sent back from the target window.
+
+#### `cli.dispose()`
+
+Stops listening and cancels all polling messages. Releases the client for garbage collection.
 
 ## Contributing
 

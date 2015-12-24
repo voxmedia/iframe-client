@@ -23,8 +23,8 @@ describe('Xframe Messaging Client', function() {
   beforeEach(function() {
     frame = new FakeWindow()
     clock = sinon.useFakeTimers()
-    client = iframeClient(PROTOCOL_APP_ID).listen()
-    client2 = iframeClient(PROTOCOL_APP_ID).listen()
+    client = IframeClient.create(PROTOCOL_APP_ID).listen()
+    client2 = IframeClient.create(PROTOCOL_APP_ID).listen()
   })
 
   afterEach(function() {
@@ -38,12 +38,12 @@ describe('Xframe Messaging Client', function() {
   })
 
   it ('configures a client with a custom host origin.', function() {
-    var client2 = iframeClient(PROTOCOL_APP_ID, 'http://aweso.me')
+    var client2 = IframeClient.create(PROTOCOL_APP_ID, 'http://aweso.me')
     expect(client2.host).to.equal('http://aweso.me')
   })
 
   it ('creates clients with unique random GUIDs.', function() {
-    var client2 = iframeClient(PROTOCOL_APP_ID)
+    var client2 = IframeClient.create(PROTOCOL_APP_ID)
     expect(client.id).to.match(/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/)
     expect(client.id).to.not.equal(client2.id)
   })
