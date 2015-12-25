@@ -4,6 +4,18 @@ Provides simple and reliable cross-origin JavaScript messaging between iframes a
 
 This repo is configured as an NPM module and a Ruby gem for integration into Node-based projects and Rails applications.
 
+## Install
+
+### Rails
+
+In Gemfile:
+
+`gem 'iframe-client', :git => 'git@github.com:voxmedia/iframe-client.git'`
+
+In JavaScript manifest:
+
+`//= require iframe-client`
+
 ## Usage
 
 ### 1. Create client instances
@@ -56,6 +68,10 @@ hostClient.request('#my-iframe', 'getstuff', 'hello embed!', function(err, res) 
 ```
 
 ## API
+
+#### `IframeClient.isInIframe()`
+
+Checks if the current window environment is displayed in an iframe. Returns true when in an iframe.
 
 #### `var cli = IframeClient.create(appId, [allowedOrigin])`
 

@@ -1,3 +1,18 @@
+/**
+* Cross-frame Messaging Client.
+* This API is installed within one or more iframe windows,
+* and manages their cross-origin communication via postMessage.
+* All frames MUST install their own instance of this client.
+* Features:
+* - Polling requests to push messages through to an unloaded source.
+* - Request/response management for round-trip data exchanges.
+* @example
+* var client = XframeClient.create('volume', 'http://aweso.me')
+*  .on('play', function(data) { ... }, this)
+*  .on('pause', function(data) { ... }, this)
+*  .on('host', function(data) { return document.domain; }, this)
+*  .listen();
+*/
 (function(global, factory) {
 
   /**
@@ -10,14 +25,25 @@
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
   }
 
-  /**
-  * Creates a new Xframe Client instance.
-  * Seeds the client factory with parameters.
-  * @private
-  */
-  var IframeClient = {
+  var IframeClient = {  
+    /**
+    * Creates a new IframeClient instance.
+    * Seeds the client factory with parameters.
+    * @private
+    */
     create: function(app, origin) {
       return factory(guid(), app, origin, global);
+    },
+
+    /**
+    * Tests if the current window environment is within an iframe.
+    */
+    isInIframe: function() {
+      try {
+        return global.self !== global.top;
+      } catch (e) {
+        return true;
+      }
     }
   };
 
