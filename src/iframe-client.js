@@ -1,20 +1,9 @@
-/**
-* Cross-frame Messaging Client.
-* This API is installed within one or more iframe windows,
-* and manages their cross-origin communication via postMessage.
-* All frames MUST install their own instance of this client.
-* Features:
-* - Polling requests to push messages through to an unloaded source.
-* - Request/response management for round-trip data exchanges.
-* @example
-* var client = XframeClient.create('volume', 'http://aweso.me')
-*  .on('play', function(data) { ... }, this)
-*  .on('pause', function(data) { ... }, this)
-*  .on('host', function(data) { return document.domain; }, this)
-*  .listen();
-*/
+/*!
+ * IframeClient Library v0.0.2
+ * Copyright 2015, Vox Media
+ * Released under MIT license
+ */
 (function(global, factory) {
-
   /**
   * Generates a random GUID (Globally-Unique IDentifier)
   * Allows client iframes to independently assign themselves a unique ID.
@@ -25,6 +14,16 @@
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
   }
 
+  /**
+  * IframeClient API
+  * All frames must install and create their own instance of this client.
+  * @example
+  * var client = IframeClient.create('myapp', 'http://aweso.me')
+  *  .on('play', function(data) { ... }, this)
+  *  .on('pause', function(data) { ... }, this)
+  *  .on('host', function(data) { return document.domain; }, this)
+  *  .listen();
+  */
   var IframeClient = {  
     /**
     * Creates a new IframeClient instance.
@@ -40,7 +39,7 @@
     */
     isInIframe: function() {
       try {
-        return global.self !== global.top;
+        return global.parent && global.self !== global.top;
       } catch (e) {
         return true;
       }

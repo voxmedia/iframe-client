@@ -119,6 +119,15 @@ Initiates a request/response cycle with the target window. The message is repeat
 
 Stops listening and cancels all polling messages. Releases the client for garbage collection.
 
+## Testing
+
+```
+npm install
+npm test
+```
+
+Or, open `test/test.html` in a browser after package installation.
+
 ## Contributing
 
 1. Fork it ( https://github.com/voxmedia/iframe-client/fork )
