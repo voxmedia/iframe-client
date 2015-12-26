@@ -1,5 +1,5 @@
 /*!
- * IframeClient Library v0.0.2
+ * IframeClient v0.0.3
  * Copyright 2015, Vox Media
  * Released under MIT license
  */
@@ -56,20 +56,19 @@
     global.IframeClient = IframeClient;
   }
 
-})(this, function(CLIENT_GUID, appId, originHost, global) {
+})(window, function(CLIENT_GUID, appId, originHost, global) {
 
   // Constants
   var PROTOCOL_APP = '@app';
   var PROTOCOL_APP_ID = appId || 'xframe';
   var PROTOCOL_RESPONSE = '@res';
   var POLL_INTERVAL = 200;
-  var MAX_ATTEMPTS = Math.floor(15000 / POLL_INTERVAL);
 
   // Encapsulated state
   var handlers = [];
   var requests = {};
   var responses = {};
-  var requestUUID = 0;
+  var requestId = 0;
   var currentPoll = null;
   var listener = null;
 
@@ -139,16 +138,18 @@
     * Use this method to (better) guarentee delivery.
     * @param {String} message string to send.
     * @param {Any} [value] an optional value to send with the message.
-    * @param {Function} callback function to call with the response data.
+    * @param {Function} [callback] function to call with the response data.
+    * @param {Number} [timeout] in milliseconds before request is aborted.
     * @returns {String} id of the newly-created request.
     */
-    request: function(src, message, value, callback) {
+    request: function(src, message, value, callback, timeout) {
       src = this.src(src);
       if (!src || !message) return;
 
       var self = this;
-      var id = CLIENT_GUID +'-'+ ('0000' + requestUUID++).slice(-4);
+      var id = CLIENT_GUID +'-'+ ('0000' + requestId++).slice(-4);
       var req = requests[id] = {
+        timeout: (timeout || 15000),
         attempts: 0,
         src: src,
         cb: callback,
@@ -167,7 +168,7 @@
         for (var id in requests) {
           if (requests.hasOwnProperty(id)) {
             var pending = requests[id];
-            if (pending.attempts++ < MAX_ATTEMPTS) {
+            if (pending.attempts++ < pending.timeout / POLL_INTERVAL) {
               self.post(pending.src, pending.data);
               running = true;
             } else {
@@ -288,7 +289,6 @@
             // GENERIC MESSAGE (just handle locally)
             handleMessage(evt, req);
           }
-
         }.bind(this);
 
         global.addEventListener('message', listener);
