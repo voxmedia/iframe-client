@@ -1,6 +1,5 @@
 var PROTOCOL_APP_ID = 'test';
 var POLL_INTERVAL = 200;
-var MAX_ATTEMPTS = Math.floor(15000 / POLL_INTERVAL);
 var POST_MESSAGE = 'hello';
 var POST_VALUE = 'world';
 
@@ -124,8 +123,24 @@ describe('Xframe Messaging Client', function() {
     })
 
     it ('stops polling with error after a request has timed out.', function() {
+      var DEFAULT_TIMEOUT = 15000;
+      var MAX_ATTEMPTS = Math.floor(DEFAULT_TIMEOUT / POLL_INTERVAL);
       var callback = sinon.spy();
       client.request(frame, POST_MESSAGE, POST_VALUE, callback)
+      clock.tick(POLL_INTERVAL * (MAX_ATTEMPTS + 1))
+
+      expect(frame.postMessage.callCount).to.equal(MAX_ATTEMPTS)
+      expect(callback.calledOnce).to.be.true
+
+      var err = callback.lastCall.args[0];
+      expect(err.message).to.match(/timeout/)
+    })
+
+    it ('stops polling with error after a custom timeout duration.', function() {
+      var CUSTOM_TIMEOUT = 2000;
+      var MAX_ATTEMPTS = Math.floor(CUSTOM_TIMEOUT / POLL_INTERVAL)
+      var callback = sinon.spy();
+      client.request(frame, POST_MESSAGE, POST_VALUE, callback, CUSTOM_TIMEOUT)
       clock.tick(POLL_INTERVAL * (MAX_ATTEMPTS + 1))
 
       expect(frame.postMessage.callCount).to.equal(MAX_ATTEMPTS)
