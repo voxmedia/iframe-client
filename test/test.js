@@ -200,4 +200,22 @@ describe('Xframe Messaging Client', function() {
       })
     })
   })
+
+  describe('debug mode', function() {
+    afterEach(function() {
+      IframeClient.debug = false;
+    })
+
+    it ('throws post errors, when enabled.', function() {
+      expect(function() { client.post(null, POST_MESSAGE) }).not.to.throw()
+      IframeClient.debug = true;
+      expect(function() { client.post(null, POST_MESSAGE) }).to.throw()
+    })
+
+    it ('throws request errors, when enabled.', function() {
+      expect(function() { client.request(null, POST_MESSAGE) }).not.to.throw()
+      IframeClient.debug = true;
+      expect(function() { client.request(null, POST_MESSAGE) }).to.throw()
+    })
+  })
 })

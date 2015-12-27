@@ -1,19 +1,9 @@
 /*!
- * IframeClient v0.0.3
+ * IframeClient v0.0.5
  * Copyright 2015, Vox Media
  * Released under MIT license
  */
 (function(global, factory) {
-  /**
-  * Generates a random GUID (Globally-Unique IDentifier)
-  * Allows client iframes to independently assign themselves a unique ID.
-  * @private
-  */
-  function guid() {
-    function s4() { return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-  }
-
   /**
   * IframeClient API
   * All frames must install and create their own instance of this client.
@@ -24,14 +14,16 @@
   *  .on('host', function(data) { return document.domain; }, this)
   *  .listen();
   */
-  var IframeClient = {  
+  var IframeClient = {
+    debug: false,
+
     /**
     * Creates a new IframeClient instance.
     * Seeds the client factory with parameters.
     * @private
     */
     create: function(app, origin) {
-      return factory(guid(), app, origin, global);
+      return factory(this, app, origin, global);
     },
 
     /**
@@ -43,6 +35,13 @@
       } catch (e) {
         return true;
       }
+    },
+
+    /**
+    * Library error handling.
+    */
+    error: function(err) {
+      if (this.debug) throw err;
     }
   };
 
@@ -56,9 +55,16 @@
     global.IframeClient = IframeClient;
   }
 
-})(window, function(CLIENT_GUID, appId, originHost, global) {
+})(window, function(lib, appId, originHost, global) {
+
+  /**
+  * Generates a random GUID (Globally-Unique IDentifier) component.
+  * @private
+  */
+  function s4() { return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); }
 
   // Constants
+  var CLIENT_GUID = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
   var PROTOCOL_APP = '@app';
   var PROTOCOL_APP_ID = appId || 'xframe';
   var PROTOCOL_RESPONSE = '@res';
@@ -116,7 +122,7 @@
     */
     post: function(src, message, value) {
       src = this.src(src);
-      if (!src || !message) return;
+      if (!src || !message) return lib.error('invalid post');
 
       // Generate the base data object:
       var data = (typeof message === 'string') ? { message: message } : message;
@@ -127,7 +133,11 @@
       // Validate message and protocol before sending:
       if (data.message) {
         data[PROTOCOL_APP] = PROTOCOL_APP_ID;
-        src.postMessage(JSON.stringify(data), this.host);
+        try {
+          src.postMessage(JSON.stringify(data), this.host);
+        } catch (e) {
+          lib.error(e);
+        }
       }
     },
 
@@ -144,7 +154,7 @@
     */
     request: function(src, message, value, callback, timeout) {
       src = this.src(src);
-      if (!src || !message) return;
+      if (!src || !message) return lib.error('invalid request');
 
       var self = this;
       var id = CLIENT_GUID +'-'+ ('0000' + requestId++).slice(-4);
@@ -238,6 +248,7 @@
     */
     listen: function() {
       if (!listener) {
+        var self = this;
 
         // Loops through all handlers, responding to the message type:
         // collects and returns an optional response value from handlers.
@@ -255,7 +266,7 @@
         // Handle events sent from `postMessage`.
         // This listener delegates all requests and responses.
         listener = function(evt) {
-          var origin = (this.host === '*' || String(evt.origin).indexOf(this.host) >= 0);
+          var origin = (self.host === '*' || String(evt.origin).indexOf(self.host) >= 0);
           var req, res;
 
           // Parse request data:
@@ -274,12 +285,12 @@
 
             // MESSAGE RESPONSE (conclude request/response cycle)
             if (isResponse && requests.hasOwnProperty(req.id)) {
-              this.end(req);
+              self.end(req);
             }
             // REQUEST FOR RESPONSE (handle message and send response)
             else if (!isResponse && !responses.hasOwnProperty(req.id)) {
               responses[req.id] = true;
-              this.post(evt.source, {
+              self.post(evt.source, {
                 message: PROTOCOL_RESPONSE,
                 value: handleMessage(evt, req) || 'success',
                 id: req.id
@@ -289,7 +300,7 @@
             // GENERIC MESSAGE (just handle locally)
             handleMessage(evt, req);
           }
-        }.bind(this);
+        };
 
         global.addEventListener('message', listener);
       }
