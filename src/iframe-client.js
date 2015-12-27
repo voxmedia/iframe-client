@@ -97,7 +97,7 @@
       }
 
       // Check target element (iframe) for a content window:
-      if (src && src.contentWindow) {
+      if (src && src instanceof Element && src.contentWindow) {
         src = src.contentWindow;
       }
 

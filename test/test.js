@@ -48,7 +48,8 @@ describe('Xframe Messaging Client', function() {
   })
 
   it ('uses ".src" to resolve references to an embedded window source.', function() {
-    var fakeIframe = { contentWindow: frame }
+    var fakeIframe = document.createElement('div')
+    fakeIframe.contentWindow = frame
     expect(client.src(fakeIframe)).to.equal(frame)
     expect(client.src(frame)).to.equal(frame)
   })
