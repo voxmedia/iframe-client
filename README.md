@@ -6,6 +6,20 @@ This repo is configured as an NPM module and a Ruby gem for integration into Nod
 
 ## Install
 
+### Node
+
+In package dependencies:
+
+`"iframe-client": "git@github.com:voxmedia/iframe-client.git"`
+
+Then install:
+
+`npm install`
+
+In project script:
+
+`var IframeClient = require('iframe-client');`
+
 ### Rails
 
 In Gemfile:
